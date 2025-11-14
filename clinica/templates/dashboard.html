@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="row mb-3">
+  <div class="col-md-8">
+    <h2 class="mb-1">{{ titulo }}</h2>
+    {% if perfil %}
+      <span class="badge bg-primary badge-rol">
+        Rol: {{ perfil.get_rol_display }}
+      </span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="card main-card">
+      <div class="card-body text-center py-3">
+        <div class="text-muted small">Total reservas</div>
+        <div class="display-6 mb-0">{{ total_reservas }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-9 mb-3">
+    <div class="card main-card">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0 text-muted">Reservas por estado</h6>
+        </div>
+        <div class="row text-center">
+          <div class="col">
+            <div class="small text-muted">Pendientes</div>
+            <div class="fw-bold">{{ resumen_estados.PENDIENTE|default:"0" }}</div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Confirmadas</div>
+            <div class="fw-bold">{{ resumen_estados.CONFIRMADA|default:"0" }}</div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">En atención</div>
+            <div class="fw-bold">{{ resumen_estados.EN_ATENCION|default:"0" }}</div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Completadas</div>
+            <div class="fw-bold text-success">{{ resumen_estados.COMPLETADA|default:"0" }}</div>
+          </div>
+          <div class="col">
+            <div class="small text-muted">Canceladas</div>
+            <div class="fw-bold text-danger">{{ resumen_estados.CANCELADA|default:"0" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card main-card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>Listado de reservas</strong>
+    {% if perfil and perfil.rol == "PACIENTE" %}
+      <a href="{% url 'agendar' %}" class="btn btn-sm btn-success">
+        <i class="bi bi-calendar-plus me-1"></i> Nueva reserva
+      </a>
+    {% endif %}
+  </div>
+  <div class="card-body p-0">
+    {% if reservas %}
+      <div class="table-responsive">
+        <table class="table table-striped table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Paciente</th>
+              <th>Médico</th>
+              <th>Especialidad</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reservas %}
+              <tr>
+                <td>{{ r.fecha }}</td>
+                <td>{{ r.hora }}</td>
+                <td>{{ r.paciente.perfil.user.username }}</td>
+                <td>{{ r.medico.perfil.user.username }}</td>
+                <td>{{ r.especialidad.nombre }}</td>
+                <td>{{ r.get_estado_display }}</td>
+                <td class="text-center">
+                  {% if perfil.rol == "PACIENTE" or perfil.rol == "ADMIN" %}
+                    <a href="{% url 'editar_reserva' r.id %}" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{% url 'cancelar_reserva' r.id %}" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-x-circle"></i>
+                    </a>
+                  {% elif perfil.rol == "MEDICO" %}
+                    <div class="btn-group btn-group-sm" role="group">
+                      <a href="{% url 'cambiar_estado_reserva' r.id 'CONFIRMADA' %}"
+                         class="btn btn-outline-secondary" title="Confirmar">
+                        <i class="bi bi-check2-circle"></i>
+                      </a>
+                      <a href="{% url 'cambiar_estado_reserva' r.id 'EN_ATENCION' %}"
+                         class="btn btn-outline-warning" title="En atención">
+                        <i class="bi bi-activity"></i>
+                      </a>
+                      <a href="{% url 'cambiar_estado_reserva' r.id 'COMPLETADA' %}"
+                         class="btn btn-outline-success" title="Completada">
+                        <i class="bi bi-check-all"></i>
+                      </a>
+                    </div>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="p-3 mb-0">No hay reservas para mostrar.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
